@@ -3,7 +3,6 @@ package com.akholodok.stats.aggregator.service;
 import com.akholodok.stats.aggregator.model.Stats;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -13,6 +12,18 @@ import java.util.stream.IntStream;
 /**
  * Statistics aggregator which is based on bucketing.
  * Each bucket represents aggregated statistics for specific second.
+ * <p>
+ * <b>Complexity:</b>
+ * <p>
+ * For duration K, where 1 < K << N:
+ * {@link BucketStatsAggregator#add(Instant, double)} - complexity if O(1);
+ * {@link BucketStatsAggregator#getStats()} (Instant, double)} - complexity if O(1);
+ * memory consumption - O(1)
+ * <p>
+ * For duration K, where K == N, prefer to use another implementation, since:
+ * {@link BucketStatsAggregator#add(Instant, double)} - complexity if O(N);
+ * {@link BucketStatsAggregator#getStats()} (Instant, double)} - complexity if O(N);
+ * memory consumption - O(N)
  */
 public class BucketStatsAggregator implements StatsAggregator {
 
@@ -28,21 +39,22 @@ public class BucketStatsAggregator implements StatsAggregator {
     private final TimeSource timeSource;
     private final BinaryOperator<Bucket> bucketReducer;
 
-    public BucketStatsAggregator(int size,
+    public BucketStatsAggregator(int duration,
                                  TimeSource timeSource,
                                  BinaryOperator<Bucket> bucketReducer) {
-        this.buckets = new AtomicReferenceArray<>(size);
+        this.buckets = new AtomicReferenceArray<>(duration);
         this.timeSource = timeSource;
         this.bucketReducer = bucketReducer;
     }
 
-    public BucketStatsAggregator(int size,
+    public BucketStatsAggregator(int duration,
                                  TimeSource timeSource) {
-        this(size, timeSource, DEFAULT_BUCKET_REDUCER);
+        this(duration, timeSource, DEFAULT_BUCKET_REDUCER);
     }
 
     static class Bucket {
 
+        // number of seconds since unix epoch
         private final long epochSeconds;
 
         private final long count;
@@ -92,9 +104,7 @@ public class BucketStatsAggregator implements StatsAggregator {
         int index;
 
         do {
-            Instant now = timeSource.now();
-            if (now.minus(getDuration(), ChronoUnit.SECONDS).isAfter(timestamp) ||
-                timestamp.isAfter(now)) {
+            if (!isValidTimestamp(timeSource.now(), timestamp)) {
                 return false;
             }
 
@@ -103,6 +113,9 @@ public class BucketStatsAggregator implements StatsAggregator {
             oldBucket = buckets.get(index);
 
             newBucket = new Bucket(value, statEpochSeconds);
+            // if oldBucket has no value yet or it is associated with timestamp
+            // which is older than aggregation duration window - just insert newBucket
+            // otherwise - merge old and new
             if (oldBucket != null && statEpochSeconds == oldBucket.epochSeconds) {
                 newBucket = bucketReducer.apply(oldBucket, newBucket);
             }
@@ -129,5 +142,10 @@ public class BucketStatsAggregator implements StatsAggregator {
     @Override
     public int getDuration() {
         return buckets.length();
+    }
+
+    private boolean isValidTimestamp(Instant now, Instant timestamp) {
+        // valid timestamp should fall into [now - duration; now] time interval
+        return !now.minusSeconds(getDuration()).isBefore(timestamp) && !timestamp.isAfter(now);
     }
 }
