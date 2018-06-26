@@ -13,15 +13,15 @@ import java.time.Instant;
 
 import javax.validation.Valid;
 
-@RestController(TransactionsController.PATH)
-public class TransactionsController {
+@RestController(TransactionsRestController.PATH)
+public class TransactionsRestController {
 
     public static final String PATH = "transactions";
 
     private final StatsAggregator statsAggregator;
 
     @Autowired
-    public TransactionsController(StatsAggregator statsAggregator) {
+    public TransactionsRestController(StatsAggregator statsAggregator) {
         this.statsAggregator = statsAggregator;
     }
 

@@ -26,7 +26,7 @@ import org.springframework.web.context.WebApplicationContext;
 @WebAppConfiguration
 @ContextConfiguration(classes = AppConfiguration.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-public class TransactionsControllerTests {
+public class TransactionsRestControllerTests {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -44,7 +44,7 @@ public class TransactionsControllerTests {
 
     @Test(timeout = 5_000)
     public void testGetStatsEmpty() throws Exception {
-        this.mockMvc.perform(get(TransactionsController.PATH)
+        this.mockMvc.perform(get(TransactionsRestController.PATH)
             .accept(MediaType.parseMediaType(MediaType.APPLICATION_JSON_UTF8_VALUE)))
             .andExpect(status().isNoContent());
     }
@@ -56,7 +56,7 @@ public class TransactionsControllerTests {
         AddTransactionRequest request = new AddTransactionRequest(amount, timeSource.now().toEpochMilli());
 
         this.mockMvc.perform(
-            post(TransactionsController.PATH)
+            post(TransactionsRestController.PATH)
                 .content(mapper.writeValueAsBytes(request))
                 .contentType(MediaType.parseMediaType(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
@@ -64,7 +64,7 @@ public class TransactionsControllerTests {
 
         Stats expectedResponse = new Stats(1, amount, amount, amount);
         this.mockMvc.perform(
-            get(TransactionsController.PATH)
+            get(TransactionsRestController.PATH)
                 .contentType(MediaType.parseMediaType(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(status().isOk())
@@ -79,7 +79,7 @@ public class TransactionsControllerTests {
         AddTransactionRequest request = new AddTransactionRequest(amount, timeSource.now().plusSeconds(10).toEpochMilli());
 
         this.mockMvc.perform(
-            post(TransactionsController.PATH)
+            post(TransactionsRestController.PATH)
                 .content(mapper.writeValueAsBytes(request))
                 .contentType(MediaType.parseMediaType(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
@@ -90,7 +90,7 @@ public class TransactionsControllerTests {
     public void testAddStatsMissingAmount() throws Exception {
         AddTransactionRequest request = new AddTransactionRequest(null, timeSource.now().plusSeconds(10).toEpochMilli());
         this.mockMvc.perform(
-            post(TransactionsController.PATH)
+            post(TransactionsRestController.PATH)
                 .content(mapper.writeValueAsBytes(request))
                 .contentType(MediaType.parseMediaType(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
@@ -102,7 +102,7 @@ public class TransactionsControllerTests {
     public void testAddStatsMissingTimestamp() throws Exception {
         AddTransactionRequest request = new AddTransactionRequest(10.0, null);
         this.mockMvc.perform(
-            post(TransactionsController.PATH)
+            post(TransactionsRestController.PATH)
                 .content(mapper.writeValueAsBytes(request))
                 .contentType(MediaType.parseMediaType(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
