@@ -94,8 +94,8 @@ public class TransactionsRestControllerTests {
                 .content(mapper.writeValueAsBytes(request))
                 .contentType(MediaType.parseMediaType(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(status().isBadRequest());
-        //.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE));
+            .andExpect(status().isBadRequest())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE));
     }
 
     @Test(timeout = 5_000)
@@ -106,7 +106,7 @@ public class TransactionsRestControllerTests {
                 .content(mapper.writeValueAsBytes(request))
                 .contentType(MediaType.parseMediaType(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .accept(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(status().isBadRequest());
-        //.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE));
+            .andExpect(status().isBadRequest())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE));
     }
 }
