@@ -1,0 +1,17 @@
+#!/bin/bash
+
+#
+# mac os date is different than gnu date
+# so workaround is to get epoch time with
+# seconds precision and randomly add ms part
+#
+# however this allows to test 200 and 204
+# response codes
+#
+
+EPOCH_MS="$(($(date +%s) * 1000 + $RANDOM % 1000))"
+AMOUNT=$(($RANDOM % 100))
+curl -v \
+    -H 'Content-Type: application/json' \
+    -d "{\"amount\": ${AMOUNT}, \"timestamp\": ${EPOCH_MS}}" \
+    127.0.0.1:8080/transactions
