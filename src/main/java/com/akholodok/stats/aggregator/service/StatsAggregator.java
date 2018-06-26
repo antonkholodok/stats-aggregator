@@ -38,4 +38,8 @@ public interface StatsAggregator {
      * @return Aggregation window duration in seconds.
      */
     int getDuration();
+
+    default boolean isValidTimestamp(Instant now, Instant timestamp) {
+        return (now.getEpochSecond() - timestamp.getEpochSecond() < getDuration()) && !timestamp.isAfter(now);
+    }
 }

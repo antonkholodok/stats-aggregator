@@ -143,9 +143,4 @@ public class BucketStatsAggregator implements StatsAggregator {
     public int getDuration() {
         return buckets.length();
     }
-
-    private boolean isValidTimestamp(Instant now, Instant timestamp) {
-        // valid timestamp should fall into [now - duration; now] time interval
-        return !now.minusSeconds(getDuration()).isBefore(timestamp) && !timestamp.isAfter(now);
-    }
 }
