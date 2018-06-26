@@ -3,7 +3,6 @@ package com.akholodok.stats.aggregator.service;
 import com.akholodok.stats.aggregator.model.Stats;
 
 import java.time.Instant;
-import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import java.util.Optional;

@@ -1,13 +1,13 @@
 package com.akholodok.stats.aggregator.service;
 
-import static junit.framework.TestCase.*;
-import static org.mockito.Mockito.*;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 
 import com.akholodok.stats.aggregator.model.Stats;
-import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.time.Instant;
 import java.util.List;
