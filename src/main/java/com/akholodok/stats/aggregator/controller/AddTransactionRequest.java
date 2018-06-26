@@ -3,16 +3,16 @@ package com.akholodok.stats.aggregator.controller;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
-public class PostTransaction {
+public class AddTransactionRequest {
 
     private Double amount;
     private Long timestamp;
 
-    public PostTransaction() {
+    public AddTransactionRequest() {
 
     }
 
-    public PostTransaction(Double amount, Long timestamp) {
+    public AddTransactionRequest(Double amount, Long timestamp) {
         this.amount = amount;
         this.timestamp = timestamp;
     }

@@ -26,7 +26,7 @@ public class TransactionsController {
     }
 
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> add(@Valid @RequestBody PostTransaction transaction) {
+    public ResponseEntity<?> add(@Valid @RequestBody AddTransactionRequest transaction) {
         boolean added = statsAggregator.add(
             Instant.ofEpochMilli(transaction.getTimestamp()),
             transaction.getAmount());

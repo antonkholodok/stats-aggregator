@@ -53,7 +53,7 @@ public class TransactionsControllerTests {
     public void testAddStatsAndGetStats() throws Exception {
 
         double amount = 10.0;
-        PostTransaction request = new PostTransaction(amount, timeSource.now().toEpochMilli());
+        AddTransactionRequest request = new AddTransactionRequest(amount, timeSource.now().toEpochMilli());
 
         this.mockMvc.perform(
             post(TransactionsController.PATH)
@@ -76,7 +76,7 @@ public class TransactionsControllerTests {
     public void testAddStatsInFuture() throws Exception {
 
         double amount = 10.0;
-        PostTransaction request = new PostTransaction(amount, timeSource.now().plusSeconds(10).toEpochMilli());
+        AddTransactionRequest request = new AddTransactionRequest(amount, timeSource.now().plusSeconds(10).toEpochMilli());
 
         this.mockMvc.perform(
             post(TransactionsController.PATH)
@@ -88,7 +88,7 @@ public class TransactionsControllerTests {
 
     @Test(timeout = 5_000)
     public void testAddStatsMissingAmount() throws Exception {
-        PostTransaction request = new PostTransaction(null, timeSource.now().plusSeconds(10).toEpochMilli());
+        AddTransactionRequest request = new AddTransactionRequest(null, timeSource.now().plusSeconds(10).toEpochMilli());
         this.mockMvc.perform(
             post(TransactionsController.PATH)
                 .content(mapper.writeValueAsBytes(request))
@@ -100,7 +100,7 @@ public class TransactionsControllerTests {
 
     @Test(timeout = 5_000)
     public void testAddStatsMissingTimestamp() throws Exception {
-        PostTransaction request = new PostTransaction(10.0, null);
+        AddTransactionRequest request = new AddTransactionRequest(10.0, null);
         this.mockMvc.perform(
             post(TransactionsController.PATH)
                 .content(mapper.writeValueAsBytes(request))
