@@ -9,7 +9,7 @@
 # response codes
 #
 
-EPOCH_MS="$(($(date +%s) * 1000 + $RANDOM % 1000))"
+EPOCH_MS="$(($(date -u +%s) * 1000 + $RANDOM % 1000))"
 AMOUNT=$(($RANDOM % 100))
 curl -v \
     -H 'Content-Type: application/json' \
