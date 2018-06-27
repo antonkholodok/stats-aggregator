@@ -49,8 +49,6 @@
 * complexity:
   * for K << N - for write/read time and memory complexity is constant O(1)
   * for K -> N - for write/read time and memory complexity increases to linear O(N), so in this case another approach should be considered
-* knowing read/write frequency distribution various optimizations could be applied, e.g. having majority of reads 
-it would make sense to perform pre-aggregations on write operation etc.
 * downside of bucketing approach - less accuracy (seconds precision) in favor of time and space complexity
 
 ## Tests
