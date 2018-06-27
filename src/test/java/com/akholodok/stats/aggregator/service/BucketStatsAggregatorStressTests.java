@@ -2,6 +2,7 @@ package com.akholodok.stats.aggregator.service;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -21,6 +22,9 @@ import java.util.stream.IntStream;
 public class BucketStatsAggregatorStressTests {
 
     private static final int SECONDS = 60;
+    private static final int ROUNDS = SECONDS;
+    private static final int OPS_PER_ROUND = 300;
+    private static final int WORKERS_COUNT = Math.max(Runtime.getRuntime().availableProcessors(), 2);
 
     private StatsAggregator aggregator;
     private TimeSource timeSource;
@@ -35,8 +39,8 @@ public class BucketStatsAggregatorStressTests {
     public void testParallel() {
 
         //
-        // Run N threads in parallel each performing K aggregator inserts rounds.
-        // Each round is represented by one second and performs [1..M] inserts.
+        // Run N worker threads in parallel each performing K operations rounds.
+        // Each round is represented by one second and performs M read and write operations.
         //
         // So the total expected stats:
         // stats = {
@@ -50,17 +54,15 @@ public class BucketStatsAggregatorStressTests {
         Instant now = Instant.now();
         when(timeSource.now()).thenReturn(now);
 
-        int threadsCount = Math.max(Runtime.getRuntime().availableProcessors(), 2);
-        int inserts = 30;
-        int rounds = SECONDS;
-
+        // setup barrier to force worker threads to wait for
+        // time increment to one second
         AtomicInteger roundsCompleted = new AtomicInteger();
         CyclicBarrier barrier = new CyclicBarrier(
-            threadsCount,
+            WORKERS_COUNT,
             () -> when(timeSource.now()).thenReturn(now.plusSeconds(roundsCompleted.incrementAndGet())));
 
-        List<Thread> threads = IntStream.range(0, threadsCount)
-            .mapToObj(i -> new Thread(new SeedRunnable(aggregator, timeSource, barrier, rounds, inserts)))
+        List<Thread> threads = IntStream.range(0, WORKERS_COUNT)
+            .mapToObj(i -> new Thread(new WorkerRunnable(aggregator, timeSource, barrier, ROUNDS, OPS_PER_ROUND)))
             .peek(Thread::start)
             .collect(Collectors.toList());
 
@@ -68,55 +70,57 @@ public class BucketStatsAggregatorStressTests {
             try {
                 thread.join();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                fail("Working thread was interrupted");
             }
         }
 
+        // decrement time to one second to undo last barrier action
         when(timeSource.now()).thenReturn(now.plusSeconds(roundsCompleted.get() - 1));
+
         Optional<Stats> statsOpt = aggregator.getStats();
         assertTrue(statsOpt.isPresent());
 
         Stats stats = statsOpt.get();
         assertEquals(1.0, stats.getMin());
-        assertEquals((double) inserts, stats.getMax());
-        assertEquals(threadsCount * rounds * inserts, stats.getCount());
-        assertEquals((double) (threadsCount * rounds * inserts * (inserts + 1) / 2), stats.getSum());
+        assertEquals((double) OPS_PER_ROUND, stats.getMax());
+        assertEquals(WORKERS_COUNT * ROUNDS * OPS_PER_ROUND, stats.getCount());
+        assertEquals((double) (WORKERS_COUNT * ROUNDS * OPS_PER_ROUND * (OPS_PER_ROUND + 1) / 2), stats.getSum());
     }
 
-    static class SeedRunnable implements Runnable {
+    static class WorkerRunnable implements Runnable {
 
         private final StatsAggregator aggregator;
         private final TimeSource timeSource;
 
         private final int rounds;
-        private final int inserts;
+        private final int opsPerRound;
 
+        // barrier to wait at the end of each round
         private CyclicBarrier barrier;
 
-        public SeedRunnable(StatsAggregator aggregator,
-                            TimeSource timeSource,
-                            CyclicBarrier barrier,
-                            int rounds, int inserts) {
+        public WorkerRunnable(StatsAggregator aggregator,
+                              TimeSource timeSource,
+                              CyclicBarrier barrier,
+                              int rounds,
+                              int opsPerRound) {
             this.aggregator = aggregator;
             this.timeSource = timeSource;
             this.barrier = barrier;
             this.rounds = rounds;
-            this.inserts = inserts;
+            this.opsPerRound = opsPerRound;
         }
 
         @Override
         public void run() {
             for (int round = 0; round < rounds; ++round) {
-                IntStream.range(1, inserts + 1).forEach(i -> {
+                IntStream.range(1, opsPerRound + 1).forEach(i -> {
                     aggregator.add(timeSource.now(), i);
                     aggregator.getStats();
                 });
                 try {
                     barrier.await();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (BrokenBarrierException e) {
-                    e.printStackTrace();
+                } catch (InterruptedException | BrokenBarrierException e) {
+                    throw new RuntimeException(e);
                 }
             }
         }
